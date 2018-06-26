@@ -3,11 +3,10 @@ package ru.stqa.pft.addressbook.model;
 import java.util.Objects;
 
 public class GroupData {
-  private final String name;
-  private final String header;
-  private final String footer;
-  private  int id;
-
+  private String name;
+  private String header;
+  private String footer;
+  private int id = Integer.MAX_VALUE;
 
 
   @Override
@@ -21,20 +20,20 @@ public class GroupData {
   public int getId() {
     return id;
   }
-  public GroupData(String name, String header, String footer) {
-    this.name = name;
-    this.header = header;
-    this.footer = footer;
-    this.id = 0;
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    GroupData groupData = (GroupData) o;
+    return id == groupData.id &&
+            Objects.equals(name, groupData.name);
   }
 
-  public GroupData(String name, String header, String footer, int id) {
-    this.name = name;
-    this.header = header;
-    this.footer = footer;
-    this.id = id;
+  @Override
+  public int hashCode() {
 
+    return Objects.hash(name, id);
   }
 
   public String getName() {
@@ -48,22 +47,24 @@ public class GroupData {
   public String getFooter() {
     return footer;
   }
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    GroupData groupData = (GroupData) o;
-    return Objects.equals(name, groupData.name) &&
-            Objects.equals(id, groupData.id);
-  }
 
-  @Override
-  public int hashCode() {
-
-    return Objects.hash(name, id);
-  }
-
-  public void setId(int max) {
+  public GroupData withId(int max) {
     this.id = max;
+    return this;
+  }
+
+  public GroupData withName(String name) {
+    this.name = name;
+    return this;
+  }
+
+  public GroupData withHeader(String header) {
+    this.header = header;
+    return this;
+  }
+
+  public GroupData withFooter(String footer) {
+    this.footer = footer;
+    return this;
   }
 }

@@ -1,38 +1,58 @@
 package ru.stqa.pft.addressbook.tests;
 
-import org.testng.Assert;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import ru.stqa.pft.addressbook.model.GroupData;
+import ru.stqa.pft.addressbook.model.Groups;
 
-import java.util.HashSet;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.equalToObject;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 
 public class GroupCreationTests extends TestBase {
-  @Test
-  public void testGroupCreation() {
-    app.getNavigationHelper().goToGroupPage();
-    List<GroupData> before = app.getGroupHelper().getGroupList();
-    GroupData gd = new GroupData("test2", "header", null);
-    app.getGroupHelper().createGroup(gd);
-    List<GroupData> after = app.getGroupHelper().getGroupList();
-    Assert.assertEquals(after.size(), before.size() + 1);
-
-
-    int max = 0;
-    for(GroupData g : after){
-      if(g.getId() > max){
-        max = g.getId();
-      }
+  @DataProvider
+  public Iterator<Object[]> validGroups() throws IOException {
+    List<Object[]> list = new ArrayList<>();
+    BufferedReader reader = new BufferedReader(new FileReader(new File("src/test/resources/groups.csv")));
+    String line = reader.readLine();
+    while (line != null) {
+      String[] split = line.split(";");
+      list.add(new Object[]{new GroupData().withName(split[0]).withHeader(split[1]).withFooter(split[2])});
+      line = reader.readLine();
     }
-
-    int max1 = after.stream().max((o1, o2) -> Integer.compare(o1.getId(),o2.getId())).get().getId();
-
-    gd.setId(max1);
-    before.add(gd);
-    Assert.assertEquals(new HashSet<Object>(before), new HashSet<Object>(after));
+    return list.iterator();
   }
 
+  @Test(dataProvider = "validGroups")
+  public void testGroupCreation(GroupData group) {
+    app.goTo().groupPage();
+    Groups before = app.group().all();
+    app.group().create(group);
+    assertThat(app.group().count(), equalToObject(before.size() + 1));
+    Groups after = app.group().all();
+    assertThat(after, equalTo(
+            before.withAdded(group.withId(after.stream().mapToInt((g) -> g.getId()).max().getAsInt()))));
 
+  }
+
+  @Test
+  public void testBadGroupCreation() {
+    app.goTo().groupPage();
+    Groups before = app.group().all();
+    GroupData group = new GroupData().withName("test2'").withFooter("sbds").withHeader("krkdlzlpsr");
+    app.group().create(group);
+    assertThat(app.group().count(), equalToObject(before.size()));
+    Groups after = app.group().all();
+
+    assertThat(after, equalTo(before));
+
+  }
 }
+
 
